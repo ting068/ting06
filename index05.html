@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDGs 性別平權 - 3D/2D 關卡冒險與證書</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #0f172a;
+        }
+
+        .level-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            overflow: hidden;
+        }
+
+        .level-screen.active {
+            display: block;
+        }
+
+        /* ---------------- 第一關 樣式 ---------------- */
+        #level1-container {
+            background-image: url('螢幕擷取畫面 2026-11-02 195137.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .hut {
+            position: absolute;
+            width: 65px;
+            height: 65px;
+            cursor: pointer;
+            z-index: 5;
+            transition: transform 0.3s, opacity 0.5s ease;
+            filter: drop-shadow(0 5px 8px rgba(0,0,0,0.4));
+        }
+
+        .hut:hover {
+            transform: scale(1.25);
+        }
+
+        .hut.hidden-node, .balloon.hidden-node, .flower-node.hidden-node {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: scale(0) !important;
+        }
+
+        .balloon {
+            position: absolute;
+            width: 75px;
+            height: 110px;
+            cursor: pointer;
+            z-index: 6;
+            transition: opacity 0.5s ease;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.3));
+            animation: floatBalloon 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatBalloon {
+            0% { transform: translateY(0px) scale(var(--bg-scale, 1)); }
+            100% { transform: translateY(-15px) scale(var(--bg-scale, 1)); }
+        }
+
+        /* ---------------- 第二關 樣式 ---------------- */
+        #park-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .flower-node {
+            position: absolute;
+            cursor: pointer;
+            z-index: 20;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.3));
+        }
+
+        .flower-node:hover {
+            transform: scale(1.3) rotate(12deg) !important;
+            filter: drop-shadow(0 12px 22px rgba(255, 235, 59, 0.9));
+        }
+
+        @keyframes flowerBounce {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .flower-animate {
+            animation: flowerBounce 3s ease-in-out infinite;
+        }
+
+        .drag-card {
+            touch-action: none;
+            cursor: grab;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .drag-card:active {
+            cursor: grabbing;
+            transform: scale(1.03);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        }
+
+        .drop-zone.drag-over {
+            transform: scale(1.02);
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.6);
+        }
+
+        /* ---------------- 第三關 樣式 ---------------- */
+        #level3-screen {
+            background-color: #f4f6f9;
+            overflow-y: auto;
+        }
+
+        .certificate-container {
+            width: 800px;
+            height: 560px;
+            background: #ffffff;
+            padding: 22px;
+            position: relative;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+        }
+
+        .outer-border {
+            width: 100%;
+            height: 100%;
+            border: 6px double #d4af37;
+            padding: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .inner-border {
+            width: 100%;
+            height: 100%;
+            border: 2px solid #b59226;
+            padding: 18px 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .corner-decoration {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #d4af37;
+        }
+        .top-left { top: 6px; left: 6px; border-right: none; border-bottom: none; }
+        .top-right { top: 6px; right: 6px; border-left: none; border-bottom: none; }
+        .bottom-left { bottom: 6px; left: 6px; border-right: none; border-top: none; }
+        .bottom-right { bottom: 6px; right: 6px; border-left: none; border-top: none; }
+
+        .svg-icon {
+            width: 100%;
+            height: 100%;
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.85) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .animate-pop {
+            animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* 專用列印樣式 */
+        @media print {
+            body, html {
+                background: white !important;
+                height: auto;
+                overflow: visible;
+            }
+
+            .level-screen {
+                display: none !important;
+            }
+
+            #level3-screen {
+                display: flex !important;
+                position: static !important;
+                width: 100% !important;
+                height: auto !important;
+                background: white !important;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .certificate-container {
+                box-shadow: none !important;
+                margin: 0 auto !important;
+                page-break-inside: avoid;
+            }
+
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 全局音效按鈕 -->
+    <div class="fixed top-4 right-4 z-50 no-print flex items-center gap-2">
+        <button id="global-audio-btn" onclick="toggleAudio()" class="bg-slate-900/85 hover:bg-slate-800 border-2 border-amber-400/60 text-amber-200 px-4 py-2 rounded-2xl shadow-xl flex items-center gap-2 font-bold text-sm transition backdrop-blur-md">
+            <i id="audio-icon" class="fa-solid fa-volume-xmark text-rose-400"></i>
+            <span id="audio-text">背景音樂：關</span>
+        </button>
+    </div>
+
+    <!-- ==================== 第一關：村莊考驗 ==================== -->
+    <div id="level1-screen" class="level-screen active">
+        <div id="level1-container" class="w-full h-full relative">
+            <!-- 標題與得分 -->
+            <div class="absolute top-5 left-5 text-2xl font-black text-slate-800 bg-white/90 px-6 py-2.5 rounded-2xl shadow-xl border-2 border-amber-300 z-10">
+                SDGs 性別平權
+            </div>
+            <div class="absolute top-5 right-44 text-xl font-bold text-amber-700 bg-white/90 px-5 py-2.5 rounded-2xl shadow-xl border-2 border-amber-300 z-10">
+                答對題數：<span id="l1-score" class="text-2xl font-black text-emerald-600">0</span> / 10
+            </div>
+
+            <!-- 地圖點擊節點 -->
+            <div id="l1-interactables"></div>
+        </div>
+    </div>
+
+    <!-- 第一關答題 Modal -->
+    <div id="l1-quiz-modal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white border-4 border-amber-500 rounded-3xl max-w-lg w-full p-6 text-center shadow-2xl animate-pop">
+            <h3 id="l1-quiz-q" class="text-xl font-black text-slate-800 mb-5 leading-relaxed">題目載入中...</h3>
+            <div id="l1-quiz-options" class="flex flex-col gap-3 mb-4"></div>
+        </div>
+    </div>
+
+    <!-- 第一關結果 Modal -->
+    <div id="l1-result-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-white border-8 border-amber-500 rounded-3xl max-w-md w-full p-8 text-center shadow-2xl animate-pop">
+            <h2 id="l1-result-title" class="text-3xl font-black mb-3"></h2>
+            <p id="l1-result-desc" class="text-slate-600 text-base mb-6 font-medium leading-relaxed"></p>
+            <div id="l1-result-action"></div>
+        </div>
+    </div>
+
+
+    <!-- ==================== 第二關：遊樂園情境題 ==================== -->
+    <div id="level2-screen" class="level-screen">
+        <div id="game-container" class="w-full h-full relative">
+            <canvas id="park-canvas"></canvas>
+
+            <!-- 標題與得分 -->
+            <div class="absolute top-5 left-5 text-2xl font-black text-fuchsia-100 bg-fuchsia-950/85 px-6 py-2.5 rounded-2xl shadow-xl border-2 border-fuchsia-400/60 backdrop-blur-md z-10">
+                SDGs 性別平權-情境題
+            </div>
+            <div class="absolute top-5 right-44 text-xl font-bold text-fuchsia-200 bg-fuchsia-950/85 px-5 py-2.5 rounded-2xl shadow-xl border-2 border-fuchsia-400/60 backdrop-blur-md z-10">
+                答對題數：<span id="l2-score" class="text-2xl font-black text-emerald-400">0</span> / 6
+            </div>
+
+            <!-- 花朵容器 -->
+            <div id="l2-flower-container" class="w-full h-full relative"></div>
+        </div>
+    </div>
+
+    <!-- 第二關拖拉 Modal -->
+    <div id="l2-quiz-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-amber-50 border-4 border-fuchsia-700 rounded-3xl max-w-2xl w-full p-6 md:p-8 shadow-2xl animate-pop">
+            <div class="flex items-center gap-2 mb-3">
+                <span id="l2-quiz-badge" class="bg-fuchsia-800 text-fuchsia-100 font-bold px-3 py-1 rounded-full text-xs">花朵考驗</span>
+            </div>
+            <p class="text-slate-700 text-sm md:text-base font-bold mb-4 bg-amber-100/80 p-3 rounded-xl border border-amber-300">
+                💡 請將下方的語句卡片拖曳歸類至對應的「性別平等」或「性別不平等」框框中：
+            </p>
+
+            <div id="l2-cards-pool" class="min-h-[100px] bg-slate-200/70 border-2 border-dashed border-slate-400 rounded-2xl p-4 mb-5 flex flex-col md:flex-row gap-3 justify-center items-center" ondragover="allowDrop(event)" ondrop="drop(event, 'pool')"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="drop-zone bg-emerald-100/80 border-4 border-emerald-500 rounded-2xl p-4 min-h-[160px] flex flex-col items-center" ondragover="allowDrop(event)" ondrop="drop(event, 'equal')">
+                    <h4 class="text-emerald-800 font-black text-lg mb-2"><i class="fa-solid fa-scale-balanced"></i> 性別平等</h4>
+                    <div id="l2-equal-target" class="w-full flex flex-col gap-2 flex-1"></div>
+                </div>
+                <div class="drop-zone bg-rose-100/80 border-4 border-rose-500 rounded-2xl p-4 min-h-[160px] flex flex-col items-center" ondragover="allowDrop(event)" ondrop="drop(event, 'unequal')">
+                    <h4 class="text-rose-800 font-black text-lg mb-2"><i class="fa-solid fa-ban"></i> 性別不平等</h4>
+                    <div id="l2-unequal-target" class="w-full flex flex-col gap-2 flex-1"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end">
+                <button onclick="submitL2GroupAnswer()" class="bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-black px-8 py-3 rounded-xl shadow-lg transition">確認提交解答</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 第二關結果 Modal -->
+    <div id="l2-result-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-amber-50 border-8 border-fuchsia-800 rounded-3xl max-w-md w-full p-8 text-center shadow-2xl animate-pop">
+            <div id="l2-result-icon" class="w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl shadow-inner border-4"></div>
+            <h2 id="l2-result-level" class="text-3xl font-black mb-2 text-amber-950">評估等級</h2>
+            <p id="l2-result-desc" class="text-slate-700 text-sm mb-6 bg-amber-100/80 p-4 rounded-2xl border border-amber-200 font-medium"></p>
+            <div id="l2-result-action" class="flex justify-center"></div>
+        </div>
+    </div>
+
+
+    <!-- ==================== 第三關：學習證書頁面 ==================== -->
+    <div id="level3-screen" class="level-screen flex flex-col items-center justify-center p-4">
+        <!-- 控制列 -->
+        <div class="no-print mb-6 bg-white px-6 py-4 rounded-2xl shadow-xl flex flex-wrap items-center gap-4 z-10 border-2 border-amber-300">
+            <label for="user-name-input" class="font-bold text-slate-800 text-base">證書姓名：</label>
+            <input type="text" id="user-name-input" class="px-4 py-2 border-2 border-slate-300 rounded-xl focus:border-amber-500 outline-none font-bold text-slate-800" placeholder="請輸入您的姓名" value="平權小勇士">
+            <button onclick="updateName()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-2 rounded-xl transition shadow-md">確認套用</button>
+            <button onclick="printCertificate()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded-xl transition shadow-md flex items-center gap-2">
+                <i class="fa-solid fa-print"></i> 下載 / 列印證書
+            </button>
+        </div>
+
+        <!-- 證書主體 -->
+        <div class="certificate-container" id="certificate">
+            <div class="outer-border">
+                <div class="inner-border">
+                    <div class="corner-decoration top-left"></div>
+                    <div class="corner-decoration top-right"></div>
+                    <div class="corner-decoration bottom-left"></div>
+                    <div class="corner-decoration bottom-right"></div>
+
+                    <div class="text-3xl font-black tracking-widest text-slate-800 mt-1">學習結業證書</div>
+                    <div class="text-5xl my-1 drop-shadow-md">🏆</div>
+
+                    <div class="text-xl font-bold text-slate-700">
+                        恭喜 <span id="display-name" class="text-3xl font-black text-amber-600 border-b-2 border-amber-500 px-5 mx-1 inline-block">平權小勇士</span> 試驗通過
+                    </div>
+
+                    <div class="bg-gradient-to-r from-amber-500 to-amber-600 text-white font-black text-xl px-7 py-2 rounded-full shadow-md my-2">
+                        SDGs 性別平權小達人
+                    </div>
+
+                    <p class="text-sm md:text-base text-slate-600 leading-relaxed max-w-lg my-1">
+                        感謝您成功挑戰「SDGs 性別平權」第一關村莊問答與第二關遊樂園情境考驗！<br>
+                        您展現了卓越的性別平等觀念與尊重關懷的精神，特頒此證以資鼓勵。
+                    </p>
+
+                    <div class="w-full flex justify-between items-end px-4 text-xs md:text-sm text-slate-500">
+                        <div>頒發日期：<span id="cert-date">2026 年 11 月 02 日</span></div>
+                        <div class="text-center">
+                            SDGs 平權推廣小組
+                            <div class="w-32 border-t border-slate-400 mt-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ================= 10 道 第一關 題目資料 ================= */
+        const l1Questions = [
+            { q: "1. 聯合國永續發展目標 (SDGs) 中，實現性別平等是第幾項目標？", options: ["SDG 3", "SDG 5", "SDG 8", "SDG 10"], ans: 1 },
+            { q: "2. 下列何者符合「性別平等」的觀念？", options: ["家務應全部由女性負責", "男生不應該表達軟弱或哭泣", "打破性別刻板印象，尊重個人特質與選擇", "特定職業只能由特定性別擔任"], ans: 2 },
+            { q: "3. 關於職場中的性別平等，以下何者正確？", options: ["相同工作條件下應實施同工同酬", "升遷應優先考慮男性員工", "女性申請產假應予以解僱", "男性不應申請育嬰留職停薪"], ans: 0 },
+            { q: "4. 「消除對女性一切形式歧視公約」的簡稱是什麼？", options: ["UDHR", "CEDAW", "CRC", "SDGs"], ans: 1 },
+            { q: "5. 關於家務分工與育兒責任，最佳的做法是？", options: ["全由女性承擔", "全由長輩承擔", "家庭成員依據溝通共同分擔", "全由男性承擔"], ans: 2 },
+            { q: "6. 當看到有人因性別氣質遭受霸凌或嘲笑時，應該怎麼做？", options: ["一起加入嘲笑", "保持沉默無視", "勇敢發聲制止或尋求師長協助", "認為這是正常現象"], ans: 2 },
+            { q: "7. 下列何者屬於「性別刻板印象」？", options: ["男孩子一定要喜歡藍色、玩汽車", "任何人都可以選擇自己喜歡的顏色與玩具", "男女都有表達情緒的權利", "照顧家庭是所有成員的責任"], ans: 0 },
+            { q: "8. 台灣於哪一年通過專法，成為亞洲第一個同性婚姻合法化的國家？", options: ["2017年", "2019年", "2021年", "2023年"], ans: 1 },
+            { q: "9. 鼓勵女性參與 STEM（科學、科技、工程、數學）領域的目的為何？", options: ["純粹填補人力缺口", "促進多元觀點與創新，落實機會均等", "強迫所有科系性別各半", "限制男性發展"], ans: 1 },
+            { q: "10. 關於「身體自主權」，以下何者正確？", options: ["身體自主權僅限於女性", "只要熟識就可以隨意親近", "「NO 就是 NO」，應尊重他人的身體自主權與意願", "親友之間不需要尊重身體界線"], ans: 2 }
+        ];
+
+        /* ================= 第二關 3個題組 ================= */
+        const l2QuestionGroups = [
+            {
+                id: 1,
+                label: "遊樂園園區分工",
+                items: [
+                    { id: 'item1', text: '「遊樂園的設施營運與機械維修職務，不分性別、唯才適用。」', type: 'equal' },
+                    { id: 'item2', text: '「雲霄飛車太過驚險刺激，女性員工一定不敢承擔維修任務。」', type: 'unequal' }
+                ]
+            },
+            {
+                id: 2,
+                label: "家庭育兒與情緒表達",
+                items: [
+                    { id: 'item3', text: '「遊樂園內父母輪流照顧孩童，並共同決定遊玩項目。」', type: 'equal' },
+                    { id: 'item4', text: '「男孩子在遊樂園感到害怕哭泣就是懦弱，不能表達軟弱。」', type: 'unequal' }
+                ]
+            },
+            {
+                id: 3,
+                label: "公共設施與職場權益",
+                items: [
+                    { id: 'item5', text: '「園區全面建置無性別友善廁所與舒適獨立的哺集乳室。」', type: 'equal' },
+                    { id: 'item6', text: '「園區女性主管因育兒考量而被無形限制升遷機會。」', type: 'unequal' }
+                ]
+            }
+        ];
+
+        // 向量 SVG
+        const hutSVG = `<svg class="svg-icon" viewBox="0 0 100 100"><polygon points="50,15 10,50 90,50" fill="#e67e22" /><rect x="20" y="50" width="60" height="40" fill="#f39c12" /><rect x="42" y="65" width="16" height="25" fill="#7f8c8d" /></svg>`;
+        const balloonSVG = `<svg class="svg-icon" viewBox="0 0 100 140"><ellipse cx="50" cy="50" rx="40" ry="45" fill="#ff7675" /><path d="M 50 5 Q 75 50 50 95 Q 25 50 50 5" fill="#ffeaa7" opacity="0.6" /><line x1="35" y1="92" x2="42" y2="115" stroke="#636e72" stroke-width="2"/><line x1="65" y1="92" x2="58" y2="115" stroke="#636e72" stroke-width="2"/><rect x="40" y="115" width="20" height="15" fill="#d63031" rx="3"/></svg>`;
+        const flowerSVG = `<svg class="svg-icon" viewBox="0 0 100 100"><circle cx="50" cy="24" r="18" fill="#ff7675" /><circle cx="76" cy="50" r="18" fill="#fd79a8" /><circle cx="50" cy="76" r="18" fill="#ff7675" /><circle cx="24" cy="50" r="18" fill="#fd79a8" /><circle cx="50" cy="50" r="15" fill="#fde047" stroke="#b45309" stroke-width="3" /></svg>`;
+
+        const hutPositions = [
+            { top: '48%', left: '22%' }, { top: '45%', left: '41%' }, { top: '48%', left: '70%' },
+            { top: '50%', left: '81%' }, { top: '68%', left: '23%' }, { top: '75%', left: '77%' },
+            { top: '58%', left: '52%' }
+        ];
+
+        // 狀態
+        let l1Score = 0;
+        let l1Answered = 0;
+        let l1ActiveElement = null;
+
+        let l2Score = 0;
+        let l2CompletedGroups = 0;
+        let l2ActiveElement = null;
+
+        let isAudioPlaying = false;
+        let audioContext = null;
+        let bgmInterval = null;
+
+        // 關卡切換控制
+        function goToLevel(levelNum) {
+            document.querySelectorAll('.level-screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`level${levelNum}-screen`).classList.add('active');
+
+            if (levelNum === 1) {
+                initLevel1();
+            } else if (levelNum === 2) {
+                initLevel2();
+            } else if (levelNum === 3) {
+                initLevel3();
+            }
+        }
+
+        /* ---------------- 第一關 邏輯 ---------------- */
+        function initLevel1() {
+            l1Score = 0;
+            l1Answered = 0;
+            document.getElementById('l1-score').innerText = 0;
+            const container = document.getElementById('l1-interactables');
+            container.innerHTML = '';
+
+            const shuffledQ = [...l1Questions].sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < 7; i++) {
+                const hut = document.createElement('div');
+                hut.className = 'hut';
+                hut.style.top = hutPositions[i].top;
+                hut.style.left = hutPositions[i].left;
+
+                const img = new Image();
+                img.src = 'hut.png';
+                img.onload = () => hut.appendChild(img);
+                img.onerror = () => hut.innerHTML = hutSVG;
+                img.style.width = '100%';
+                img.style.height = '100%';
+
+                hut.dataset.question = JSON.stringify(shuffledQ[i]);
+                hut.onclick = () => openL1Quiz(hut);
+                container.appendChild(hut);
+            }
+
+            const scales = [1.2, 1.5];
+            for (let i = 7; i < 10; i++) {
+                const balloon = document.createElement('div');
+                balloon.className = 'balloon';
+                const randomTop = Math.floor(Math.random() * 27) + 8;
+                const randomLeft = Math.floor(Math.random() * 80) + 10;
+                const randomScale = scales[Math.floor(Math.random() * scales.length)];
+
+                balloon.style.top = `${randomTop}%`;
+                balloon.style.left = `${randomLeft}%`;
+                balloon.style.setProperty('--bg-scale', randomScale);
+                balloon.style.transform = `scale(${randomScale})`;
+
+                const img = new Image();
+                img.src = 'balloon.png';
+                img.onload = () => balloon.appendChild(img);
+                img.onerror = () => balloon.innerHTML = balloonSVG;
+                img.style.width = '100%';
+                img.style.height = '100%';
+
+                balloon.dataset.question = JSON.stringify(shuffledQ[i]);
+                balloon.onclick = () => openL1Quiz(balloon);
+                container.appendChild(balloon);
+            }
+        }
+
+        function openL1Quiz(element) {
+            l1ActiveElement = element;
+            const qData = JSON.parse(element.dataset.question);
+            document.getElementById('l1-quiz-q').innerText = qData.q;
+            const optionsContainer = document.getElementById('l1-quiz-options');
+            optionsContainer.innerHTML = '';
+
+            qData.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left bg-slate-100 hover:bg-amber-100 border-2 border-slate-200 hover:border-amber-400 p-3 rounded-xl font-bold text-slate-700 transition';
+                btn.innerText = opt;
+                btn.onclick = () => handleL1Answer(idx === qData.ans);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('l1-quiz-modal').classList.remove('hidden');
+        }
+
+        function handleL1Answer(isCorrect) {
+            document.getElementById('l1-quiz-modal').classList.add('hidden');
+            if (isCorrect) {
+                l1Score++;
+                document.getElementById('l1-score').innerText = l1Score;
+            }
+            if (l1ActiveElement) {
+                l1ActiveElement.classList.add('hidden-node');
+            }
+            l1Answered++;
+
+            if (l1Score >= 8) {
+                showL1Result(true);
+            } else if (l1Answered === 10) {
+                showL1Result(false);
+            }
+        }
+
+        function showL1Result(isWin) {
+            const modal = document.getElementById('l1-result-modal');
+            const title = document.getElementById('l1-result-title');
+            const desc = document.getElementById('l1-result-desc');
+            const action = document.getElementById('l1-result-action');
+
+            if (isWin) {
+                title.innerText = "🎉 恭喜成功過關！";
+                title.className = "text-3xl font-black mb-3 text-emerald-600";
+                desc.innerText = `太棒了！你獲得了 ${l1Score} 分，通過第一關考驗！`;
+                action.innerHTML = `<button onclick="document.getElementById('l1-result-modal').classList.add('hidden'); goToLevel(2);" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black px-8 py-3 rounded-2xl shadow-lg transition">前往第二關 <i class="fa-solid fa-arrow-right"></i></button>`;
+            } else {
+                title.innerText = "💪 差一點就成功了！";
+                title.className = "text-3xl font-black mb-3 text-rose-600";
+                desc.innerText = `你獲得了 ${l1Score} 分。需要答對 8 題以上才能過關喔！`;
+                action.innerHTML = `<button onclick="document.getElementById('l1-result-modal').classList.add('hidden'); initLevel1();" class="bg-rose-600 hover:bg-rose-500 text-white font-black px-8 py-3 rounded-2xl shadow-lg transition">重新挑戰 <i class="fa-solid fa-rotate-right"></i></button>`;
+            }
+            modal.classList.remove('hidden');
+        }
+
+        /* ---------------- 第二關 邏輯 ---------------- */
+        function initLevel2() {
+            l2Score = 0;
+            l2CompletedGroups = 0;
+            document.getElementById('l2-score').innerText = 0;
+            drawParkBackground();
+            const container = document.getElementById('l2-flower-container');
+            container.innerHTML = '';
+
+            const usedPositions = [];
+            for (let i = 0; i < 3; i++) {
+                const flower = document.createElement('div');
+                flower.className = 'flower-node flower-animate w-20 h-20 md:w-24 md:h-24 flex items-center justify-center';
+
+                let top, left, tooClose;
+                do {
+                    tooClose = false;
+                    top = Math.floor(Math.random() * 27) + 55;
+                    left = Math.floor(Math.random() * 68) + 12;
+                    for (let pos of usedPositions) {
+                        if (Math.abs(pos.top - top) < 14 && Math.abs(pos.left - left) < 18) {
+                            tooClose = true;
+                            break;
+                        }
+                    }
+                } while (tooClose);
+
+                usedPositions.push({ top, left });
+                flower.style.top = `${top}%`;
+                flower.style.left = `${left}%`;
+
+                const img = new Image();
+                img.src = 'flower.png';
+                img.onload = () => flower.appendChild(img);
+                img.onerror = () => flower.innerHTML = flowerSVG;
+                img.style.width = '100%';
+                img.style.height = '100%';
+
+                flower.onclick = () => openL2Quiz(l2QuestionGroups[i], flower, i + 1);
+                container.appendChild(flower);
+            }
+        }
+
+        function openL2Quiz(groupData, element, index) {
+            l2ActiveElement = element;
+            document.getElementById('l2-quiz-badge').innerText = `花朵考驗 #${index} - ${groupData.label}`;
+            const pool = document.getElementById('l2-cards-pool');
+            const equalTarget = document.getElementById('l2-equal-target');
+            const unequalTarget = document.getElementById('l2-unequal-target');
+
+            pool.innerHTML = '';
+            equalTarget.innerHTML = '';
+            unequalTarget.innerHTML = '';
+
+            const shuffledItems = [...groupData.items].sort(() => Math.random() - 0.5);
+            shuffledItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'drag-card bg-white border-2 border-slate-300 hover:border-fuchsia-500 rounded-xl p-3 shadow-sm text-sm font-bold text-slate-800 cursor-grab flex items-center justify-between gap-2';
+                card.id = item.id;
+                card.draggable = true;
+                card.dataset.type = item.type;
+                card.innerHTML = `<span>${item.text}</span><i class="fa-solid fa-grip-dots-vertical text-slate-400"></i>`;
+                card.ondragstart = (e) => e.dataTransfer.setData('text/plain', item.id);
+                pool.appendChild(card);
+            });
+
+            document.getElementById('l2-quiz-modal').classList.remove('hidden');
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+        }
+
+        function drop(e, targetType) {
+            e.preventDefault();
+            const cardId = e.dataTransfer.getData('text/plain');
+            const card = document.getElementById(cardId);
+            if (!card) return;
+
+            if (targetType === 'equal') {
+                document.getElementById('l2-equal-target').appendChild(card);
+            } else if (targetType === 'unequal') {
+                document.getElementById('l2-unequal-target').appendChild(card);
+            } else {
+                document.getElementById('l2-cards-pool').appendChild(card);
+            }
+        }
+
+        function submitL2GroupAnswer() {
+            const pool = document.getElementById('l2-cards-pool');
+            if (pool.children.length > 0) {
+                alert('⚠️ 請將所有語句卡片拖曳歸類至框框中喔！');
+                return;
+            }
+
+            let groupScore = 0;
+            const equalCards = document.querySelectorAll('#l2-equal-target .drag-card');
+            const unequalCards = document.querySelectorAll('#l2-unequal-target .drag-card');
+
+            equalCards.forEach(card => { if (card.dataset.type === 'equal') groupScore++; });
+            unequalCards.forEach(card => { if (card.dataset.type === 'unequal') groupScore++; });
+
+            l2Score += groupScore;
+            l2CompletedGroups++;
+            document.getElementById('l2-score').innerText = l2Score;
+
+            document.getElementById('l2-quiz-modal').classList.add('hidden');
+            if (l2ActiveElement) {
+                l2ActiveElement.classList.add('hidden-node');
+            }
+
+            if (l2CompletedGroups === 3) {
+                setTimeout(showL2Result, 400);
+            }
+        }
+
+        function showL2Result() {
+            const modal = document.getElementById('l2-result-modal');
+            const icon = document.getElementById('l2-result-icon');
+            const level = document.getElementById('l2-result-level');
+            const desc = document.getElementById('l2-result-desc');
+            const action = document.getElementById('l2-result-action');
+
+            if (l2Score <= 3) {
+                icon.className = "w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl shadow-inner border-4 bg-rose-100 text-rose-600 border-rose-400";
+                icon.innerHTML = `<i class="fa-solid fa-seedling"></i>`;
+                level.innerText = "評估等級：再加油";
+                level.className = "text-3xl font-black mb-2 text-rose-700";
+                desc.innerText = `答對了 ${l2Score} / 6 題。性別平權需要更多練習，再試一次吧！`;
+                action.innerHTML = `<button onclick="document.getElementById('l2-result-modal').classList.add('hidden'); initLevel2();" class="bg-rose-600 text-white font-black px-8 py-3 rounded-2xl shadow-lg">再次挑戰 <i class="fa-solid fa-rotate-right"></i></button>`;
+            } else if (l2Score <= 5) {
+                icon.className = "w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl shadow-inner border-4 bg-amber-100 text-amber-600 border-amber-400";
+                icon.innerHTML = `<i class="fa-solid fa-star-half-stroke"></i>`;
+                level.innerText = "評估等級：進步中";
+                level.className = "text-3xl font-black mb-2 text-amber-700";
+                desc.innerText = `做得好！答對了 ${l2Score} / 6 題，距離成為「平權達人」只差一步囉！`;
+                action.innerHTML = `<button onclick="document.getElementById('l2-result-modal').classList.add('hidden'); initLevel2();" class="bg-amber-600 text-white font-black px-8 py-3 rounded-2xl shadow-lg">再次挑戰 <i class="fa-solid fa-rotate-right"></i></button>`;
+            } else {
+                icon.className = "w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center text-5xl shadow-inner border-4 bg-emerald-100 text-emerald-600 border-emerald-400";
+                icon.innerHTML = `<i class="fa-solid fa-award"></i>`;
+                level.innerText = "評估等級：平權達人";
+                level.className = "text-3xl font-black mb-2 text-emerald-700";
+                desc.innerText = `太完美了！你獲得全數 6 題滿分，獲封為尊榮的「平權達人」！`;
+                action.innerHTML = `<button onclick="document.getElementById('l2-result-modal').classList.add('hidden'); goToLevel(3);" class="bg-emerald-600 text-white font-black px-8 py-3 rounded-2xl shadow-lg">下載學習證書 <i class="fa-solid fa-file-certificate"></i></button>`;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function drawParkBackground() {
+            const canvas = document.getElementById('park-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width = window.innerWidth;
+            const h = canvas.height = window.innerHeight;
+
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.55);
+            skyGrad.addColorStop(0, '#74b9ff');
+            skyGrad.addColorStop(0.6, '#a29bfe');
+            skyGrad.addColorStop(1, '#ffeaa7');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            const grassGrad = ctx.createLinearGradient(0, h * 0.5, 0, h);
+            grassGrad.addColorStop(0, '#55efc4');
+            grassGrad.addColorStop(1, '#00b894');
+            ctx.fillStyle = grassGrad;
+            ctx.beginPath();
+            ctx.moveTo(0, h * 0.48);
+            ctx.bezierCurveTo(w * 0.3, h * 0.45, w * 0.7, h * 0.52, w, h * 0.46);
+            ctx.lineTo(w, h);
+            ctx.lineTo(0, h);
+            ctx.fill();
+
+            const cx = w * 0.2;
+            const cy = h * 0.35;
+            const radius = Math.min(w, h) * 0.18;
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#fd79a8';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx - radius * 0.6, cy + radius * 1.5);
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + radius * 0.6, cy + radius * 1.5);
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI / 4);
+                const bx = cx + radius * Math.cos(angle);
+                const by = cy + radius * Math.sin(angle);
+                ctx.beginPath();
+                ctx.arc(bx, by, 12, 0, Math.PI * 2);
+                ctx.fillStyle = (i % 2 === 0) ? '#ffeaa7' : '#ff7675';
+                ctx.fill();
+            }
+        }
+
+        /* ---------------- 第三關 邏輯 ---------------- */
+        function initLevel3() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            document.getElementById('cert-date').innerText = `${year} 年 ${month} 月 ${day} 日`;
+        }
+
+        function updateName() {
+            const val = document.getElementById('user-name-input').value.trim();
+            if (val) {
+                document.getElementById('display-name').innerText = val;
+            } else {
+                alert('請輸入姓名！');
+            }
+        }
+
+        function printCertificate() {
+            updateName();
+            window.print();
+        }
+
+        /* ---------------- 全局音效 ---------------- */
+        function toggleAudio() {
+            isAudioPlaying = !isAudioPlaying;
+            document.getElementById('audio-text').innerText = isAudioPlaying ? "背景音樂：開" : "背景音樂：關";
+            document.getElementById('audio-icon').className = isAudioPlaying ? "fa-solid fa-volume-high text-emerald-400" : "fa-solid fa-volume-xmark text-rose-400";
+            if (isAudioPlaying) {
+                startBGM();
+            } else {
+                stopBGM();
+            }
+        }
+
+        function startBGM() {
+            try {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') audioContext.resume();
+
+                const notes = [261.63, 329.63, 392.00, 523.25, 440.00];
+                let step = 0;
+                if (!bgmInterval) {
+                    bgmInterval = setInterval(() => {
+                        if (!isAudioPlaying || !audioContext) return;
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(notes[step % notes.length], audioContext.currentTime);
+                        gain.gain.setValueAtTime(0.03, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.start();
+                        osc.stop(audioContext.currentTime + 0.5);
+                        step++;
+                    }, 600);
+                }
+            } catch (e) {}
+        }
+
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
+
+        window.onload = () => {
+            goToLevel(1);
+            window.onresize = drawParkBackground;
+        };
+    </script>
+</body>
+</html>
